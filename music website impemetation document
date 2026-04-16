@@ -1,0 +1,63 @@
+# Implementation Plan - Standalone Premium Music Platform
+
+Build a completely new, standalone, production-ready music platform in the `music_player website` directory. This will be a high-performance Next.js application featuring glassmorphism, neon aesthetics, and advanced animations.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Project Initialization**: I will initialize a new Next.js project using `create-next-app` with TypeScript, Tailwind CSS, and App Router.
+> **GSAP Installation**: I will install `gsap` for advanced animations.
+> **Music API**: I will use the Jamendo API for high-quality, free music access without requiring authentication.
+> **Local Storage**: I will implement persistent state for "Favorites" and "Recently Played" using browser's LocalStorage.
+
+### New Project Setup
+
+#### [NEW] Project Files
+- Initialize Next.js 15+ (App Router)
+- Configure Tailwind CSS 4+ (Neon theme)
+- Setup project structure: `/src/app`, `/src/components`, `/src/hooks`, `/src/services`.
+
+### Music Components (NEW)
+
+#### [MODIFY] [GlassPlayer.tsx](file:///c:/Users/murth/OneDrive/murthys/my-website/src/music/components/GlassPlayer.tsx)
+- Redesign as a floating glass pill or card.
+- Add GSAP animations for entrance/exit.
+- Implement draggable seek bar and volume slider with micro-interactions.
+
+#### [MODIFY] [SongCard.tsx](file:///c:/Users/murth/OneDrive/murthys/my-website/src/music/components/SongCard.tsx)
+- Enhance glass effect with deeper shadows and soft borders.
+- Add hover scale and neon glow effect.
+- Add "Favorite" button toggle.
+
+#### [MODIFY] [MusicVisualizer.tsx](file:///c:/Users/murth/OneDrive/murthys/my-website/src/music/components/MusicVisualizer.tsx)
+- Improve bar resolution and color transitions.
+- Add multiple visualization modes (Bars, Waveform, Circular).
+
+#### [NEW] [SkeletonLoader.tsx](file:///c:/Users/murth/OneDrive/murthys/my-website/src/music/components/SkeletonLoader.tsx)
+- Implement shimmering skeleton loaders for tracks and hero sections.
+
+#### [NEW] [CategorySection.tsx](file:///c:/Users/murth/OneDrive/murthys/my-website/src/music/components/CategorySection.tsx)
+- Create scrollable categories for "Trending", "Recently Played", and "Favorites".
+
+### Logic & Services
+
+#### [MODIFY] [useAudio.ts](file:///c:/Users/murth/OneDrive/murthys/my-website/src/music/hooks/useAudio.ts)
+- Integrate `localStorage` for saving the play queue and favorites.
+- Add "Shuffle" and "Repeat" functionality.
+
+#### [MODIFY] [page.tsx](file:///c:/Users/murth/OneDrive/murthys/my-website/src/app/(music)/music/page.tsx)
+- Restructure the layout to include a sticky glass navbar.
+- Implement live filtering on the search results.
+- Orchestrate entrance animations using GSAP.
+
+## Verification Plan
+
+### Automated Tests
+- N/A (Unit tests could be added if requested, but manual verification of UI/UX is more critical here).
+
+### Manual Verification
+- Verify responsiveness on mobile, tablet, and desktop.
+- Test music playback, seeking, and volume control.
+- Check if "Recently Played" persists after page reload.
+- Ensure visualizer syncs perfectly with audio.
+- Validate glassmorphism blur and neon gradients across different browsers.

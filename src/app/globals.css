@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #51bdb2;
+  --color-music-primary: #2dd4bf;
+  --color-music-secondary: #0d9488;
+  --color-music-accent: #99f6e4;
+  --color-music-pink: #f43f5e;
+  
+  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; filter: drop-shadow(0 0 5px var(--color-music-primary)); }
+    50% { opacity: 0.7; filter: drop-shadow(0 0 15px var(--color-music-primary)); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+:root {
+  --background: #51bdb2;
+  --foreground: #ffffff;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism Utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  }
+  
+  .glass-panel-heavy {
+    @apply bg-black/40 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)];
+  }
+
+  .text-gradient-neon {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-music-primary via-music-accent to-white;
+  }
+
+  .neon-border-teal {
+    @apply border-music-primary/50 shadow-[0_0_15px_rgba(45,212,191,0.3)];
+  }
+
+  .neon-glow-cyan {
+    @apply shadow-[0_0_20px_rgba(153,246,228,0.4)];
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.5);
+}
+
+/* Animation Classes */
+.hover-perspective {
+  transition: transform 0.3s ease-out;
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+}
+.hover-perspective:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(2deg) scale(1.02);
+}
