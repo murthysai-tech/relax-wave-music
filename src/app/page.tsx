@@ -271,6 +271,63 @@ export default function Home() {
                    ))}
                 </div>
 
+                {/* Language Based Songs Section */}
+                <AnimatePresence mode="wait">
+                  {selectedLanguage && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mb-16 overflow-hidden"
+                    >
+                      <CategorySection 
+                        title={`${selectedLanguage.toUpperCase()} SONGS`} 
+                        icon={Globe}
+                      >
+                        {isLangLoading ? (
+                          [...Array(6)].map((_, i) => <TrackSkeleton key={i} />)
+                        ) : languageTracks.length > 0 ? (
+                          languageTracks.map((track, i) => (
+                            <SongCard 
+                              key={track.id}
+                              track={track}
+                              index={i}
+                              isActive={currentTrack?.id === track.id}
+                              isPlaying={isPlaying}
+                              isFavorite={favorites.includes(track.id)}
+                              onPlay={playTrack}
+                              onToggleFavorite={toggleFavorite}
+                            />
+                          ))
+                        ) : (
+                          <div className="col-span-full py-10 text-center glass-panel rounded-[2rem]">
+                            <p className="text-white/30 font-bold italic">No {selectedLanguage} tracks found.</p>
+                          </div>
+                        )}
+                      </CategorySection>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Visualizer Hero Section */}
+                <div className="mb-16">
+                  <div className="flex items-center justify-between mb-8 px-2">
+                    <h2 className="text-2xl font-black flex items-center gap-4 text-white">
+                      <div className="p-2 rounded-xl bg-music-accent/20 text-music-accent shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                        <Headphones className="w-6 h-6" />
+                      </div> 
+                      LIVE SPECTRUM VISUALIZER
+                    </h2>
+                    {currentTrack && (
+                      <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-music-accent/10 border border-music-accent/20">
+                         <div className="w-2 h-2 bg-music-accent rounded-full animate-pulse" />
+                         <span className="text-[10px] font-black tracking-widest text-music-accent uppercase">REAL-TIME SYNC</span>
+                      </div>
+                    )}
+                  </div>
+                  <MusicVisualizer getAnalyzerData={getAnalyzerData} isPlaying={isPlaying} />
+                </div>
+
                 {/* Grid Section */}
                 <CategorySection 
                   title={activeTab === 'trending' ? 'Global Trending' : activeTab === 'recent' ? 'Recently Played' : 'Your Favorites'} 
