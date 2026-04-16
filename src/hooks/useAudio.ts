@@ -18,6 +18,33 @@ export function useAudio() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
 
+  const getAuthToken = () => {
+    if (typeof window !== "undefined") return localStorage.getItem("relaxwave_token");
+    return null;
+  };
+
+  // Sync with Backend Playlists
+  const syncPlaylists = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch("/api/library/playlists", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const playlistMap: Record<string, Track[]> = {};
+        data.forEach((p: any) => {
+          playlistMap[p.name] = p.tracks;
+        });
+        setCustomPlaylists(playlistMap);
+      }
+    } catch (err) {
+      console.error("Failed to sync playlists", err);
+    }
+  }, []);
+
   // Initialize Audio and Load LocalStorage
   useEffect(() => {
     audioRef.current = new Audio();
@@ -27,9 +54,12 @@ export function useAudio() {
     const savedFavs = localStorage.getItem("music_favorites");
     if (savedFavs) setFavorites(JSON.parse(savedFavs));
 
-    // Load Custom Playlists
+    // Load Initial Local Playlists
     const savedPlaylists = localStorage.getItem("custom_playlists");
     if (savedPlaylists) setCustomPlaylists(JSON.parse(savedPlaylists));
+
+    // Then Sync with Cloud if logged in
+    syncPlaylists();
 
     const handleTimeUpdate = () => {
       if (audioRef.current) {
@@ -59,7 +89,7 @@ export function useAudio() {
         audioRef.current.removeEventListener("ended", handleEnded);
       }
     };
-  }, []);
+  }, [syncPlaylists]);
 
   // Sync Volume
   useEffect(() => {
@@ -84,7 +114,25 @@ export function useAudio() {
     );
   }, []);
 
-  const createPlaylist = useCallback((name: string) => {
+  const createPlaylist = useCallback(async (name: string) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        const res = await fetch("/api/library/playlists", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` 
+          },
+          body: JSON.stringify({ name, tracks: [] })
+        });
+        if (res.ok) {
+          setCustomPlaylists(prev => ({ ...prev, [name]: [] }));
+          return;
+        }
+      } catch (err) { console.error(err); }
+    }
+    // Fallback to local
     setCustomPlaylists(prev => ({ ...prev, [name]: [] }));
   }, []);
 
@@ -96,11 +144,15 @@ export function useAudio() {
     });
   }, []);
 
-  const addToPlaylist = useCallback((playlistName: string, track: Track) => {
+  const addToPlaylist = useCallback(async (playlistName: string, track: Track) => {
+    const token = getAuthToken();
+    // Simplified: local state update always happens
     setCustomPlaylists(prev => {
       const list = prev[playlistName] || [];
       if (list.find(t => t.id === track.id)) return prev;
-      return { ...prev, [playlistName]: [...list, track] };
+      const newList = [...list, track];
+      
+      return { ...prev, [playlistName]: newList };
     });
   }, []);
 

@@ -27,7 +27,8 @@ import { TrackSkeleton, HeroSkeleton } from "@/components/SkeletonLoader";
 import { CommunityPanel } from "@/components/CommunityPanel";
 import { ArtistDetails } from "@/components/ArtistDetails";
 import { PlaylistManager } from "@/components/PlaylistManager";
-import { ListMusic, Plus, LayoutGrid, FolderPlus } from "lucide-react";
+import { AuthPanel } from "@/components/AuthPanel";
+import { ListMusic, Plus, LayoutGrid, FolderPlus, User as UserIcon } from "lucide-react";
 
 export default function Home() {
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -43,9 +44,17 @@ export default function Home() {
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [trackToAddToPlaylist, setTrackToAddToPlaylist] = useState<Track | null>(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const heroRef = useRef(null);
   const contentRef = useRef(null);
+
+  useEffect(() => {
+    // Initial user check
+    const savedUser = localStorage.getItem("relaxwave_user");
+    if (savedUser) setCurrentUser(JSON.parse(savedUser));
+  }, []);
 
   const {
     isPlaying,
@@ -146,6 +155,7 @@ export default function Home() {
         onLanguageChange={setSelectedLanguage} 
         activeNav={activeNav}
         onNavChange={setActiveNav}
+        onAuthClick={() => setIsAuthOpen(true)}
       />
 
       {/* Persistent Library Toggle Button (Bottom Left) */}
@@ -159,117 +169,117 @@ export default function Home() {
       </motion.button>
 
       <div className="relative z-10 flex-grow pt-32 pb-48 container mx-auto px-6 max-w-7xl">
-        
-        {/* Floating Search Bar (Top Right) */}
-        <div className="absolute top-32 right-6 hidden xl:block z-50">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-music-accent transition-colors" />
-            <input
-              type="text"
-              placeholder="Search music..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-3 pl-12 pr-4 w-72 focus:outline-none focus:ring-2 focus:ring-music-accent/30 focus:border-music-accent/50 transition-all text-sm font-medium"
-            />
-          </div>
-        </div>
-
-        {/* Hero Section */}
-        <section ref={heroRef} className="mb-20">
-          {isLoading ? <HeroSkeleton /> : (
-            <div className="relative h-[450px] md:h-[500px] w-full rounded-[3rem] overflow-hidden group shadow-2xl border border-white/10">
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
-              <img 
-                src={tracks[0]?.image || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1200"} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                alt="Feature"
-              />
-              
-              <div className="relative z-20 h-full flex flex-col justify-end p-8 md:p-16">
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="flex items-center gap-3 text-music-accent mb-4"
-                >
-                  <Sparkles className="w-5 h-5 animate-pulse" />
-                  <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] font-mono">Trending Masterpiece</span>
-                </motion.div>
-                
-                <h1 className="text-5xl md:text-8xl font-black text-white mb-6 leading-none tracking-tighter">
-                  {tracks[0]?.name || "Relaxing Waves"}
-                </h1>
-                <p className="text-white/60 text-lg md:text-xl max-w-xl mb-10 font-medium leading-relaxed">
-                  Dive into a world of serenity. Crystal clear audio paired with mesmerizing visualizers.
-                </p>
-                
-                <div className="flex flex-wrap gap-4">
-                  <button 
-                    onClick={() => tracks[0] && playTrack(tracks[0])}
-                    className="bg-white text-black px-10 py-5 rounded-full font-black flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-                  >
-                    <Play className="w-5 h-5 fill-black" /> LISTEN NOW
-                  </button>
-                  <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-5 rounded-full font-black hover:bg-white/20 transition-all flex items-center gap-3">
-                    ADD TO PLAYLIST <ArrowRight className="w-5 h-5" />
-                  </button>
+        <AnimatePresence mode="wait">
+          {!isAuthOpen ? (
+            <motion.div
+              key="main-content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative"
+            >
+              {/* Floating Search Bar (Top Right) */}
+              <div className="absolute top-0 right-0 hidden xl:block z-50">
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-music-accent transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Search music..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-3 pl-12 pr-4 w-72 focus:outline-none focus:ring-2 focus:ring-music-accent/30 focus:border-music-accent/50 transition-all text-sm font-medium"
+                  />
                 </div>
               </div>
 
-              {/* Live Spectrum Overlay */}
-              <div className="absolute top-8 right-8 z-20 w-48 h-12 flex items-end gap-1 px-4">
-                 {[...Array(20)].map((_, i) => (
-                   <motion.div
-                    key={i}
-                    animate={{ height: isPlaying ? [10, 30, 10] : 10 }}
-                    transition={{ repeat: Infinity, duration: 0.4, delay: i * 0.05 }}
-                    className="w-1 bg-white/20 rounded-full"
-                   />
-                 ))}
-              </div>
-            </div>
-          )}
-        </section>
+              {/* Hero Section */}
+              <section ref={heroRef} className="mb-20">
+                {isLoading ? <HeroSkeleton /> : (
+                  <div className="relative h-[450px] md:h-[500px] w-full rounded-[3rem] overflow-hidden group shadow-2xl border border-white/10">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
+                    <img 
+                      src={tracks[0]?.image || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1200"} 
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                      alt="Feature"
+                    />
+                    
+                    <div className="relative z-20 h-full flex flex-col justify-end p-8 md:p-16">
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.8 }}
+                        className="flex items-center gap-3 text-music-accent mb-4"
+                      >
+                        <Sparkles className="w-5 h-5 animate-pulse" />
+                        <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] font-mono">Trending Masterpiece</span>
+                      </motion.div>
+                      
+                      <h1 className="text-5xl md:text-8xl font-black text-white mb-6 leading-none tracking-tighter">
+                        {tracks[0]?.name || "Relaxing Waves"}
+                      </h1>
+                      <p className="text-white/60 text-lg md:text-xl max-w-xl mb-10 font-medium leading-relaxed">
+                        Dive into a world of serenity. Crystal clear audio paired with mesmerizing visualizers.
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-4">
+                        <button 
+                          onClick={() => tracks[0] && playTrack(tracks[0])}
+                          className="bg-white text-black px-10 py-5 rounded-full font-black flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                        >
+                          <Play className="w-5 h-5 fill-black" /> LISTEN NOW
+                        </button>
+                        <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-5 rounded-full font-black hover:bg-white/20 transition-all flex items-center gap-3">
+                          ADD TO PLAYLIST <ArrowRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
 
-        {/* Categories Tab Navigation */}
-        <div ref={contentRef}>
-          <div className="flex items-center gap-6 mb-12 overflow-x-auto pb-4 hide-scrollbar">
-             {[
-               { id: 'trending', label: 'Trending', icon: TrendingUp },
-               { id: 'recent', label: 'Recently Played', icon: Clock },
-               { id: 'favorites', label: 'My Favorites', icon: Heart },
-             ].map((tab) => (
-               <button
-                 key={tab.id}
-                 onClick={() => setActiveTab(tab.id)}
-                 className={`px-8 py-3.5 rounded-2xl flex items-center gap-3 transition-all font-bold text-sm whitespace-nowrap ${
-                   activeTab === tab.id 
-                    ? "bg-white/20 text-white border border-white/20 shadow-2xl backdrop-blur-md" 
-                    : "bg-white/5 text-white/50 border border-white/10 hover:border-white/20 hover:text-white"
-                 }`}
-               >
-                 <tab.icon className="w-4 h-4" /> {tab.label}
-               </button>
-             ))}
-          </div>
+                    {/* Live Spectrum Overlay */}
+                    <div className="absolute top-8 right-8 z-20 w-48 h-12 flex items-end gap-1 px-4">
+                       {[...Array(20)].map((_, i) => (
+                         <motion.div
+                          key={i}
+                          animate={{ height: isPlaying ? [10, 30, 10] : 10 }}
+                          transition={{ repeat: Infinity, duration: 0.4, delay: i * 0.05 }}
+                          className="w-1 bg-white/20 rounded-full"
+                         />
+                       ))}
+                    </div>
+                  </div>
+                )}
+              </section>
 
-          {/* Language Based Songs Section */}
-          <AnimatePresence>
-            {selectedLanguage && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-16 overflow-hidden"
-              >
+              {/* Categories Tab Navigation */}
+              <div ref={contentRef}>
+                <div className="flex items-center gap-6 mb-12 overflow-x-auto pb-4 hide-scrollbar">
+                   {[
+                     { id: 'trending', label: 'Trending', icon: TrendingUp },
+                     { id: 'recent', label: 'Recently Played', icon: Clock },
+                     { id: 'favorites', label: 'My Favorites', icon: Heart },
+                   ].map((tab) => (
+                     <button
+                       key={tab.id}
+                       onClick={() => setActiveTab(tab.id)}
+                       className={`px-8 py-3.5 rounded-2xl flex items-center gap-3 transition-all font-bold text-sm whitespace-nowrap ${
+                         activeTab === tab.id 
+                          ? "bg-white/20 text-white border border-white/20 shadow-2xl backdrop-blur-md" 
+                          : "bg-white/5 text-white/50 border border-white/10 hover:border-white/20 hover:text-white"
+                       }`}
+                     >
+                       <tab.icon className="w-4 h-4" /> {tab.label}
+                     </button>
+                   ))}
+                </div>
+
+                {/* Grid Section */}
                 <CategorySection 
-                  title={`${selectedLanguage.toUpperCase()} SONGS`} 
-                  icon={Globe}
+                  title={activeTab === 'trending' ? 'Global Trending' : activeTab === 'recent' ? 'Recently Played' : 'Your Favorites'} 
+                  icon={activeTab === 'trending' ? TrendingUp : activeTab === 'recent' ? Clock : Heart}
                 >
-                  {isLangLoading ? (
-                    [...Array(6)].map((_, i) => <TrackSkeleton key={i} />)
-                  ) : languageTracks.length > 0 ? (
-                    languageTracks.map((track, i) => (
+                  {isLoading ? (
+                    [...Array(12)].map((_, i) => <TrackSkeleton key={i} />)
+                  ) : filteredTracks.length > 0 ? (
+                    filteredTracks.map((track, i) => (
                       <SongCard 
                         key={track.id}
                         track={track}
@@ -279,66 +289,36 @@ export default function Home() {
                         isFavorite={favorites.includes(track.id)}
                         onPlay={playTrack}
                         onToggleFavorite={toggleFavorite}
+                        onArtistClick={setSelectedArtist}
+                        onAddToPlaylist={(t) => setTrackToAddToPlaylist(t)}
                       />
                     ))
                   ) : (
-                    <div className="col-span-full py-10 text-center glass-panel rounded-[2rem]">
-                      <p className="text-white/30 font-bold italic">No {selectedLanguage} tracks found.</p>
+                    <div className="col-span-full py-20 text-center glass-panel rounded-[3rem]">
+                      <p className="text-white/30 font-bold italic">No tracks found in this category.</p>
                     </div>
                   )}
                 </CategorySection>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Visualizer Hero Section */}
-          <div className="mb-16">
-            <div className="flex items-center justify-between mb-8 px-2">
-              <h2 className="text-2xl font-black flex items-center gap-4 text-white">
-                <div className="p-2 rounded-xl bg-music-accent/20 text-music-accent shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-                  <Headphones className="w-6 h-6" />
-                </div> 
-                LIVE SPECTRUM VISUALIZER
-              </h2>
-              {currentTrack && (
-                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-music-accent/10 border border-music-accent/20">
-                   <div className="w-2 h-2 bg-music-accent rounded-full animate-pulse" />
-                   <span className="text-[10px] font-black tracking-widest text-music-accent uppercase">REAL-TIME SYNC</span>
-                </div>
-              )}
-            </div>
-            <MusicVisualizer getAnalyzerData={getAnalyzerData} isPlaying={isPlaying} />
-          </div>
-
-          {/* Grid Section */}
-          <CategorySection 
-            title={activeTab === 'trending' ? 'Global Trending' : activeTab === 'recent' ? 'Recently Played' : 'Your Favorites'} 
-            icon={activeTab === 'trending' ? TrendingUp : activeTab === 'recent' ? Clock : Heart}
-          >
-            {isLoading ? (
-              [...Array(12)].map((_, i) => <TrackSkeleton key={i} />)
-            ) : filteredTracks.length > 0 ? (
-              filteredTracks.map((track, i) => (
-                <SongCard 
-                  key={track.id}
-                  track={track}
-                  index={i}
-                  isActive={currentTrack?.id === track.id}
-                  isPlaying={isPlaying}
-                  isFavorite={favorites.includes(track.id)}
-                  onPlay={playTrack}
-                  onToggleFavorite={toggleFavorite}
-                  onArtistClick={setSelectedArtist}
-                  onAddToPlaylist={(t) => setTrackToAddToPlaylist(t)}
-                />
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center glass-panel rounded-[3rem]">
-                <p className="text-white/30 font-bold italic">No tracks found in this category.</p>
               </div>
-            )}
-          </CategorySection>
-        </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="auth-panel"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full flex justify-center py-20"
+            >
+              <AuthPanel 
+                onClose={() => setIsAuthOpen(false)}
+                onSuccess={(user) => {
+                  setCurrentUser(user);
+                  window.location.reload();
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Persistent Floating Player */}

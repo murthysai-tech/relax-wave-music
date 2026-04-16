@@ -1,32 +1,49 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Music2, Bell, User, Menu, X, Home as HomeIcon, Compass, Library, Mic2, Globe, ChevronDown } from "lucide-react";
+import { Search, Music2, Bell, User, Menu, X, Home as HomeIcon, Compass, Library, Mic2, Globe, ChevronDown, LogOut, PlusSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface GlassNavbarProps {
   currentLanguage: string;
   onLanguageChange: (lang: string) => void;
   activeNav?: string;
   onNavChange?: (id: string) => void;
+  onAuthClick?: () => void;
 }
 
-export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNavChange }: GlassNavbarProps) {
+export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNavChange, onAuthClick }: GlassNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    
+    // Check for user session
+    const savedUser = localStorage.getItem("relaxwave_user");
+    if (savedUser) setUser(JSON.parse(savedUser));
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("relaxwave_token");
+    localStorage.removeItem("relaxwave_user");
+    setUser(null);
+    router.push("/login");
+  };
 
   const languages = [
     { id: 'telugu', label: 'Telugu' },
     { id: 'hindi', label: 'Hindi' },
     { id: 'english', label: 'English' }
   ];
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-[1000] transition-all duration-500 px-4 py-4 md:px-8 ${
@@ -37,14 +54,14 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
       }`}>
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3 group cursor-pointer">
+          <Link href="/" className="flex items-center gap-3 group cursor-pointer">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-500 backdrop-blur-md border-none">
               <Music2 className="text-white w-6 h-6 md:w-7 md:h-7" />
             </div>
-            <span className="text-xl md:text-2xl font-black tracking-tighter text-white hidden sm:block">
+            <span className="text-xl md:text-2xl font-black tracking-tighter text-white hidden sm:block uppercase">
               RELAX<span className="text-music-accent">WAVE</span>
             </span>
-          </div>
+          </Link>
 
           {/* Desktop Nav - Symbols Only */}
           <div className="hidden md:flex items-center gap-8">
@@ -114,15 +131,24 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button className="p-2.5 rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-all hidden sm:block border-none">
-              <Bell className="w-5 h-5" />
-            </button>
-            <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/10 p-0.5 group cursor-pointer overflow-hidden border-none">
-               <div className="w-full h-full rounded-[0.8rem] bg-gradient-to-br from-music-secondary to-music-pink flex items-center justify-center group-hover:scale-110 transition-transform">
-                 <User className="text-white w-5 h-5" />
-               </div>
-            </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/10 p-0.5 group cursor-pointer overflow-hidden border-none">
+                 <div className="w-full h-full rounded-[0.8rem] bg-gradient-to-br from-music-secondary to-music-pink flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <User className="text-white w-5 h-5" />
+                 </div>
+              </div>
+            ) : (
+              <button 
+                onClick={onAuthClick}
+                className="flex items-center gap-2 group p-1 pr-4 rounded-full bg-white/5 hover:bg-white hover:text-black transition-all border border-white/10"
+              >
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                  <User className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-black tracking-widest uppercase">Join</span>
+              </button>
+            )}
             <button 
               className="md:hidden p-2.5 rounded-xl bg-white/5 text-white"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
