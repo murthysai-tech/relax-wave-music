@@ -12,9 +12,10 @@ interface GlassNavbarProps {
   activeNav?: string;
   onNavChange?: (id: string) => void;
   onAuthClick?: () => void;
+  onHomeClick?: () => void;
 }
 
-export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNavChange, onAuthClick }: GlassNavbarProps) {
+export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNavChange, onAuthClick, onHomeClick }: GlassNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -54,7 +55,7 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
       }`}>
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group cursor-pointer">
+          <Link href="/" onClick={(e) => { e.preventDefault(); onHomeClick?.(); }} className="flex items-center gap-3 group cursor-pointer">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-500 backdrop-blur-md border-none">
               <Music2 className="text-white w-6 h-6 md:w-7 md:h-7" />
             </div>

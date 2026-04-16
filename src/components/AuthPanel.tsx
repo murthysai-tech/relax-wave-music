@@ -220,7 +220,7 @@ function AuthCard({
           </button>
         </form>
 
-        <div className="mt-10 pt-8 border-t border-white/5 text-center">
+        <div className="mt-6 pt-6 border-t border-white/5 text-center">
           <button 
             onClick={onToggle}
             className="text-white/40 text-sm font-bold hover:text-white transition-colors flex items-center justify-center gap-2 mx-auto"

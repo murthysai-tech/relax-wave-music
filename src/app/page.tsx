@@ -156,6 +156,10 @@ export default function Home() {
         activeNav={activeNav}
         onNavChange={setActiveNav}
         onAuthClick={() => setIsAuthOpen(true)}
+        onHomeClick={() => {
+          setIsAuthOpen(false);
+          setSelectedArtist(null);
+        }}
       />
 
       {/* Persistent Library Toggle Button (Bottom Left) */}
