@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 
 import { getTrendingTracks, searchTracks, Track } from "@/services/jamendo";
+import { LOCAL_TRACKS, getLocalTracksByLanguage } from "@/services/localTracks";
 import { useAudio } from "@/hooks/useAudio";
 import { SongCard } from "@/components/SongCard";
 import { FloatingPlayer } from "@/components/FloatingPlayer";
@@ -24,7 +25,7 @@ import { ParticleBackground } from "@/components/ParticleBackground";
 import { GlassNavbar } from "@/components/GlassNavbar";
 import { CategorySection } from "@/components/CategorySection";
 import { TrackSkeleton, HeroSkeleton } from "@/components/SkeletonLoader";
-import { CommunityPanel } from "@/components/CommunityPanel";
+import { TrendingSidebar } from "@/components/TrendingSidebar";
 import { ArtistDetails } from "@/components/ArtistDetails";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -84,8 +85,10 @@ export default function Home() {
   // Load initial trending tracks
   useEffect(() => {
     async function init() {
-      const data = await getTrendingTracks(24);
-      setTracks(data);
+      const trendingData = await getTrendingTracks(18);
+      // Merge local tracks at the beginning
+      const combined = [...LOCAL_TRACKS, ...trendingData];
+      setTracks(combined);
       setIsLoading(false);
       
       // GSAP Entrance Animation
@@ -105,12 +108,19 @@ export default function Home() {
 
   // Fetch songs by language
   useEffect(() => {
-    if (!selectedLanguage) return;
+    if (!selectedLanguage) {
+      setLanguageTracks([]);
+      return;
+    }
     
     async function fetchLang() {
       setIsLangLoading(true);
-      const data = await searchTracks(selectedLanguage, 12);
-      setLanguageTracks(data);
+      // First get local tracks for this language
+      const localForLang = getLocalTracksByLanguage(selectedLanguage);
+      // Then fetch some more from external API
+      const externalData = await searchTracks(selectedLanguage, 12);
+      
+      setLanguageTracks([...localForLang, ...externalData]);
       setIsLangLoading(false);
     }
     fetchLang();
@@ -172,7 +182,7 @@ export default function Home() {
         <ListMusic className="w-6 h-6" />
       </motion.button>
 
-      <div className="relative z-10 flex-grow pt-32 pb-48 container mx-auto px-6 max-w-7xl">
+      <div className="relative z-10 flex-grow pt-32 pb-48 lg:pt-36 lg:pb-52 container mx-auto px-6 max-w-7xl xl:pr-[400px]">
         <AnimatePresence mode="wait">
           {!isAuthOpen ? (
             <motion.div
@@ -398,7 +408,14 @@ export default function Home() {
           />
         )}
       </AnimatePresence>
-      <CommunityPanel />
+      <TrendingSidebar 
+        tracks={tracks}
+        currentTrackId={currentTrack?.id}
+        isPlaying={isPlaying}
+        onPlay={playTrack}
+        favorites={favorites}
+        onToggleFavorite={toggleFavorite}
+      />
 
       {/* Advanced Feature Overlays */}
       <ArtistDetails 

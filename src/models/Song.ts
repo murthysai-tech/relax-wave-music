@@ -23,6 +23,11 @@ const SongSchema = new mongoose.Schema({
   genre: {
     type: String,
   },
+  language: {
+    type: String,
+    required: [true, "Language is required"],
+    default: "English",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

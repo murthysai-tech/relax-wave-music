@@ -198,7 +198,7 @@ export function useAudio() {
     setIsPlaying(!isPlaying);
   }, [isPlaying, currentTrack, setupAudioContext]);
 
-  const playTrack = useCallback((track: Track) => {
+  const playTrack = useCallback(async (track: Track) => {
     if (!audioRef.current) return;
 
     if (currentTrack?.id === track.id) {
@@ -211,6 +211,19 @@ export function useAudio() {
     setCurrentTrack(track);
     setIsPlaying(true);
     
+    // Sync to backend history if logged in
+    const userStr = localStorage.getItem("relaxwave_user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      // We use track.id but database expects song._id if it's our own song
+      // For Jamendo tracks, we might need a different strategy, but for now we'll send it
+      fetch("/api/user/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id || user._id, songId: track.id })
+      }).catch(err => console.error("History sync failed", err));
+    }
+
     setupAudioContext();
     if (audioContextRef.current?.state === "suspended") {
       audioContextRef.current.resume();
