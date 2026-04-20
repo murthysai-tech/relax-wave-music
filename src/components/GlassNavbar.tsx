@@ -134,21 +134,24 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
           {/* Actions */}
           <div className="flex items-center gap-4">
             {user ? (
-              <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/10 p-0.5 group cursor-pointer overflow-hidden border-none">
+              <div 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/10 p-0.5 group cursor-pointer overflow-hidden border-none"
+              >
                  <div className="w-full h-full rounded-[0.8rem] bg-gradient-to-br from-music-secondary to-music-pink flex items-center justify-center group-hover:scale-110 transition-transform">
                    <User className="text-white w-5 h-5" />
                  </div>
               </div>
             ) : (
-              <button 
-                onClick={onAuthClick}
+              <Link 
+                href="/login"
                 className="flex items-center gap-2 group p-1 pr-4 rounded-full bg-white/5 hover:bg-white hover:text-black transition-all border border-white/10"
               >
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-black/20 transition-colors">
                   <User className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-black tracking-widest uppercase">Join</span>
-              </button>
+                <span className="text-[10px] font-black tracking-widest uppercase text-white group-hover:text-black">Join</span>
+              </Link>
             )}
             <button 
               className="md:hidden p-2.5 rounded-xl bg-white/5 text-white"
@@ -171,8 +174,25 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
           >
             <div className="flex flex-col gap-6">
               {['Home', 'Browse', 'Playlists', 'Artists'].map((item) => (
-                <a key={item} href="#" className="text-2xl font-black text-white">{item}</a>
+                <button 
+                  key={item} 
+                  onClick={() => {
+                    onNavChange?.(item.toLowerCase());
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="text-2xl font-black text-white text-left hover:text-music-accent transition-colors"
+                >
+                  {item}
+                </button>
               ))}
+              {user && (
+                <button 
+                  onClick={handleLogout}
+                  className="mt-4 flex items-center gap-3 text-music-pink font-black uppercase tracking-widest text-sm"
+                >
+                  <LogOut className="w-5 h-5" /> Sign Out
+                </button>
+              )}
             </div>
           </motion.div>
         )}

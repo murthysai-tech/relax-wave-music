@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
 import jwt from "jsonwebtoken";
+import { updateUser } from "@/lib/storageHub";
 
 const JWT_SECRET = process.env.JWT_SECRET || "RelaxWaveSecret123";
 
@@ -16,13 +15,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    await dbConnect();
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { phoneNumber },
-      { new: true }
-    );
+    // Hub will look in MongoDB first, then Local File
+    const user = await updateUser(userId, { phoneNumber });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -30,7 +24,7 @@ export async function POST(req: Request) {
 
     // Since they now have a phone number, give them a token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id || user.id, email: user.email },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -38,10 +32,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       message: "Profile updated successfully", 
       token,
-      user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber } 
+      user: { 
+        id: user._id || user.id, 
+        username: user.username, 
+        email: user.email, 
+        phoneNumber: user.phoneNumber 
+      } 
     });
 
   } catch (error: any) {
+    console.error("UPDATE ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

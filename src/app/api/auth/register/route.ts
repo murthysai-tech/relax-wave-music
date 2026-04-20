@@ -1,38 +1,49 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import { createUser, findUser } from "@/lib/storageHub";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, phoneNumber } = await req.json();
+    const { username, email, password, phoneNumber } = await req.json();
 
-    if (!name || !email || !password || !phoneNumber) {
+    if (!username || !email || !password || !phoneNumber) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    await dbConnect();
-
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
+    // Check if user exists (by email OR username)
+    const existingUser = await findUser({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 });
+      const field = existingUser.email === email ? "Email" : "Username";
+      return NextResponse.json({ error: `${field} already exists` }, { status: 400 });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
-    const user = await User.create({
-      name,
+    // Create user (Hub will decide local vs cloud)
+    const user = await createUser({
+      username,
       email,
       password: hashedPassword,
       phoneNumber,
       provider: "local",
     });
 
-    return NextResponse.json({ message: "User registered successfully", user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber } }, { status: 201 });
+    // Send Welcome Email (Fail silently if email config is missing)
+    try {
+      await sendWelcomeEmail(email, username);
+    } catch (e) {
+      console.warn("Welcome email could not be sent:", e.message);
+    }
+
+    return NextResponse.json({ 
+      message: "User registered successfully", 
+      user: { id: user._id || user.id, username: user.username, email: user.email } 
+    }, { status: 201 });
+
   } catch (error: any) {
+    console.error("REGISTRATION ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

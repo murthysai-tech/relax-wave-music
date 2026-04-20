@@ -48,6 +48,7 @@ export function useAudio() {
   // Initialize Audio and Load LocalStorage
   useEffect(() => {
     audioRef.current = new Audio();
+    audioRef.current.crossOrigin = "anonymous"; // Fix for CORS silence
     audioRef.current.volume = volume;
 
     // Load Favorites

@@ -1,14 +1,18 @@
 import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema({
-  name: {
+  username: {
     type: String,
-    required: [true, "Please provide a name"],
+    required: [true, "Please provide a username"],
+    unique: true,
+    trim: true,
   },
   email: {
     type: String,
     required: [true, "Please provide an email"],
     unique: true,
+    lowercase: true,
+    trim: true,
   },
   password: {
     type: String,
@@ -23,6 +27,8 @@ const UserSchema = new mongoose.Schema({
     enum: ["local", "google", "instagram"],
     default: "local",
   },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   listeningHistory: [
     {
       songId: { type: mongoose.Schema.Types.ObjectId, ref: "Song" },

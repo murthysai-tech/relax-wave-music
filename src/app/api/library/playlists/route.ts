@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import dbConnect from "@/lib/db";
-import Playlist from "@/models/Playlist";
+import { getUserPlaylists, createPlaylist } from "@/lib/storageHub";
 
 // Helper to get user ID from token
 const getUserId = (req: Request) => {
@@ -23,10 +22,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
-    const playlists = await Playlist.find({ userId });
+    // Hub will lookup in MongoDB, then fall back to local playlists.json
+    const playlists = await getUserPlaylists(userId);
     return NextResponse.json(playlists);
   } catch (error: any) {
+    console.error("GET PLAYLISTS ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    await dbConnect();
-    const playlist = await Playlist.create({
+    // Hub will save to MongoDB if online, otherwise to local file
+    const playlist = await createPlaylist({
       name,
       userId,
       tracks,
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(playlist, { status: 201 });
   } catch (error: any) {
+    console.error("POST PLAYLISTS ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

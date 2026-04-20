@@ -1,0 +1,74 @@
+[
+  {
+    "username": "LocalUser",
+    "email": "local@test.com",
+    "password": "$2b$12$isXs9dEOIDz2qqt5GrFvceIQnLGynYx8opTBw0xZC9/yka0E2uef2",
+    "phoneNumber": "1111122222",
+    "provider": "local",
+    "_id": "klqyr7vmi",
+    "createdAt": "2026-04-20T17:25:25.077Z",
+    "listeningHistory": []
+  },
+  {
+    "username": "LocalUser_Fix",
+    "email": "local_fix@test.com",
+    "password": "$2b$12$.seVyit1.3/49IeJmVjtzu6NDOrOXDH2HyvJoeCXPFfUwi.AapFRm",
+    "phoneNumber": "1111122223",
+    "provider": "local",
+    "_id": "bgyd2r3vc",
+    "createdAt": "2026-04-20T17:28:31.002Z",
+    "listeningHistory": []
+  },
+  {
+    "username": "LocalUser",
+    "email": "local@test.com",
+    "password": "$2b$12$oolLZmjG9c3D9ruckGGSSOx08NF8BdIp/fn372mfcuGaduZ6.PWou",
+    "phoneNumber": "1111122222",
+    "provider": "local",
+    "_id": "lmogl2w8z",
+    "createdAt": "2026-04-20T17:29:57.802Z",
+    "listeningHistory": []
+  },
+  {
+    "username": "TestUserFinal",
+    "email": "final@test.com",
+    "password": "$2b$12$gmb3fclodahTz65ME3Mv9eqkS8udZcZozcHn6ewK35FspRtk4hUGu",
+    "phoneNumber": "9999999999",
+    "provider": "local",
+    "_id": "qtqqv8k8a",
+    "createdAt": "2026-04-20T17:31:02.424Z",
+    "listeningHistory": [
+      {
+        "songId": "local_tel_01",
+        "playedAt": "2026-04-20T18:44:44.960Z"
+      },
+      {
+        "songId": "local_tel_01",
+        "playedAt": "2026-04-20T18:07:45.939Z"
+      },
+      {
+        "songId": "local_tel_01",
+        "playedAt": "2026-04-20T18:03:45.931Z"
+      }
+    ]
+  },
+  {
+    "username": "murthy_sai",
+    "email": "murthysai79@gmail.com",
+    "password": "$2b$12$2misi4dxbhzf77u7XtPYeei4e5CnxL7HsPc/j0X9A9ykRwuAJZVjy",
+    "phoneNumber": "8886739851",
+    "provider": "local",
+    "_id": "ybf2z7mui",
+    "createdAt": "2026-04-20T18:30:49.129Z",
+    "listeningHistory": [
+      {
+        "songId": "local_hin_01",
+        "playedAt": "2026-04-20T18:40:17.645Z"
+      },
+      {
+        "songId": "local_tel_02",
+        "playedAt": "2026-04-20T18:39:45.414Z"
+      }
+    ]
+  }
+]

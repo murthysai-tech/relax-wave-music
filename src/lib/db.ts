@@ -24,6 +24,8 @@ async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 3000, // Fail fast (3 seconds) if DB is unreachable
+      connectTimeoutMS: 5000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
@@ -32,10 +34,15 @@ async function dbConnect() {
   }
 
   try {
-    cached.conn = await cached.promise;
+    // Add a race condition to ensure we don't wait too long
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Database connection timeout")), 4000)
+    );
+
+    cached.conn = await Promise.race([cached.promise, timeoutPromise]);
   } catch (e) {
     cached.promise = null;
-    console.error("MONGODB CONNECTION ERROR:", e);
+    console.warn("MONGODB CONNECTION FAILED. Entering Offline Mode.");
     throw e;
   }
 
