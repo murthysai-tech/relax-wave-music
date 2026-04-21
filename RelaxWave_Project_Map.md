@@ -1,4 +1,4 @@
-# 🗺️ RelaxWave: The Grand Map of Your Website
+﻿# 🗺️ RelaxWave: The Grand Map of Your Website
 
 Welcome to the internal map of **RelaxWave**! Imagine your website is like a giant Lego castle. Every folder and file is a specific piece or a set of instructions that helps the castle stand tall and play music.
 

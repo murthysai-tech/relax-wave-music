@@ -19,6 +19,7 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
   const router = useRouter();
 
@@ -37,7 +38,10 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
     localStorage.removeItem("relaxwave_token");
     localStorage.removeItem("relaxwave_user");
     setUser(null);
-    router.push("/login");
+    setIsUserDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    router.push("/login"); // This will now lead to the landing gateway
+    router.refresh();
   };
 
   const languages = [
@@ -134,13 +138,39 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
           {/* Actions */}
           <div className="flex items-center gap-4">
             {user ? (
-              <div 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/10 p-0.5 group cursor-pointer overflow-hidden border-none"
-              >
-                 <div className="w-full h-full rounded-[0.8rem] bg-gradient-to-br from-music-secondary to-music-pink flex items-center justify-center group-hover:scale-110 transition-transform">
-                   <User className="text-white w-5 h-5" />
-                 </div>
+              <div className="relative">
+                <div 
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/10 p-0.5 group cursor-pointer overflow-hidden border border-white/5 hover:border-music-accent/50 transition-all shadow-lg"
+                >
+                   <div className="w-full h-full rounded-[0.8rem] bg-gradient-to-br from-music-primary to-music-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                     <User className="text-white w-5 h-5" />
+                   </div>
+                </div>
+
+                <AnimatePresence>
+                  {isUserDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full right-0 mt-4 w-56 bg-black/80 backdrop-blur-2xl rounded-3xl border border-white/10 p-3 shadow-2xl z-[1001]"
+                    >
+                      <div className="px-4 py-4 mb-2 border-b border-white/5">
+                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Authenticated As</p>
+                        <p className="text-sm font-bold text-white truncate">{user.name || 'Explorer'}</p>
+                      </div>
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-music-pink hover:bg-music-pink/10 transition-all group"
+                      >
+                        <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-xs font-black uppercase tracking-widest">Sign Out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <Link 

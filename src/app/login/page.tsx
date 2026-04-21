@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, Sparkles, ArrowRight, Music2, Phone, Camera, Globe, CheckCircle2, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ParticleBackground } from "@/components/ParticleBackground";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +15,7 @@ export default function AuthPage() {
   const [success, setSuccess] = useState("");
   const [needsPhone, setNeedsPhone] = useState(false);
   const [tempUserId, setTempUserId] = useState("");
+  const [showLanding, setShowLanding] = useState(true);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -164,6 +166,69 @@ export default function AuthPage() {
     }
   };
 
+  if (showLanding) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-music-primary/30">
+        <ParticleBackground />
+        
+        {/* Background Glows */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-music-primary/20 blur-[150px] rounded-full pointer-events-none animate-pulse" />
+        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-music-accent/10 blur-[120px] rounded-full pointer-events-none" />
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="relative z-10 flex flex-col items-center text-center max-w-4xl"
+        >
+          <motion.div 
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            className="w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-[2.5rem] flex items-center justify-center mb-12 backdrop-blur-xl border border-white/20 shadow-2xl"
+          >
+            <Music2 className="text-white w-12 h-12 md:w-16 md:h-16" />
+          </motion.div>
+
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white mb-8 tracking-tighter leading-none uppercase select-none">
+            Your Personal <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-music-primary to-music-accent">Oasis</span> of Sound
+          </h1>
+          
+          <p className="text-white/40 text-lg md:text-xl font-medium mb-12 max-w-lg leading-relaxed">
+            Experience serene soundscapes in a stunning glassmorphism interface. Discover the future of music streaming.
+          </p>
+
+          <motion.button
+            whileHover={{ scale: 1.05, boxShadow: "0 0 50px rgba(34,211,238,0.2)" }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowLanding(false)}
+            className="group relative px-12 py-6 bg-white rounded-full flex items-center gap-4 transition-all"
+          >
+            <span className="text-black font-black uppercase tracking-widest text-sm">Start Your Journey</span>
+            <div className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+              <ArrowRight className="text-black w-5 h-5" />
+            </div>
+          </motion.button>
+        </motion.div>
+
+        {/* Floating Icons for decoration */}
+        <motion.div 
+          animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 text-white/5 pointer-events-none"
+        >
+          <Sparkles className="w-12 h-12" />
+        </motion.div>
+        <motion.div 
+          animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-1/4 right-1/4 text-white/5 pointer-events-none"
+        >
+          <Globe className="w-16 h-16" />
+        </motion.div>
+      </div>
+    );
+  }
+
   if (needsPhone) {
     return (
       <div className="min-h-screen flex items-center justify-center relative p-6 bg-[#050505]">
@@ -204,7 +269,20 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative p-6 bg-[#050505]">
+    <div className="min-h-screen flex items-center justify-center relative p-6 bg-[#050505] overflow-hidden selection:bg-music-primary/30">
+      <ParticleBackground />
+      
+      {/* Back to Landing Button */}
+      <motion.button 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        onClick={() => setShowLanding(true)}
+        className="absolute top-8 left-8 z-50 flex items-center gap-2 text-white/30 hover:text-white transition-colors group px-4 py-2 rounded-full hover:bg-white/5"
+      >
+        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
+      </motion.button>
+
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-music-primary/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-music-accent/20 blur-[120px] rounded-full pointer-events-none" />
 

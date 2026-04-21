@@ -14,8 +14,12 @@ import {
   ListMusic,
   Plus,
   LayoutGrid,
-  FolderPlus
+  FolderPlus,
+  Music2,
+  LogOut
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { searchYouTubeTracks } from "@/services/youtube";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 
@@ -48,6 +52,8 @@ export default function Home() {
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [trackToAddToPlaylist, setTrackToAddToPlaylist] = useState<Track | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const router = useRouter();
 
   const heroRef = useRef(null);
   const contentRef = useRef(null);
@@ -55,8 +61,13 @@ export default function Home() {
   useEffect(() => {
     // Initial user check
     const savedUser = localStorage.getItem("relaxwave_user");
-    if (savedUser) setCurrentUser(JSON.parse(savedUser));
-  }, []);
+    if (!savedUser) {
+      router.push("/login");
+    } else {
+      setCurrentUser(JSON.parse(savedUser));
+      setIsAuthChecking(false);
+    }
+  }, [router]);
 
   const {
     isPlaying,
@@ -127,22 +138,44 @@ export default function Home() {
     fetchLang();
   }, [selectedLanguage]);
 
-  // Live Filter Logic
+  // Universal Search Integration
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceSelector = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const ytResults = await searchYouTubeTracks(searchQuery);
+        setSearchResults(ytResults);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(delayDebounceSelector);
+  }, [searchQuery]);
+
+  // Combined Filter Logic
   const filteredTracks = useMemo(() => {
+    if (searchQuery && searchResults.length > 0) {
+      return searchResults;
+    }
     if (activeTab === 'favorites') {
       return tracks.filter(t => favorites.includes(t.id));
     }
     if (activeTab === 'recent') {
       return recentlyPlayed;
     }
-    if (searchQuery) {
-      return tracks.filter(t => 
-        t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        t.artist_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
     return tracks;
-  }, [tracks, searchQuery, activeTab, favorites, recentlyPlayed]);
+  }, [tracks, searchResults, searchQuery, activeTab, favorites, recentlyPlayed]);
 
   const handleNext = () => {
     const currentIndex = tracks.findIndex(t => t.id === currentTrack?.id);
@@ -157,6 +190,23 @@ export default function Home() {
       playTrack(tracks[currentIndex - 1]);
     }
   };
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 gap-6 selection:bg-music-primary/30">
+        <ParticleBackground />
+        <div className="relative">
+           <div className="w-24 h-24 border-4 border-music-accent/20 rounded-full animate-[spin_3s_linear_infinite]" />
+           <div className="absolute inset-0 w-24 h-24 border-t-4 border-music-accent rounded-full animate-spin" />
+           <Music2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white w-8 h-8" />
+        </div>
+        <div className="flex flex-col items-center gap-2 relative z-10">
+           <h2 className="text-white font-black tracking-tighter uppercase text-sm">Synchronizing your oasis</h2>
+           <p className="text-white/30 text-[10px] font-bold tracking-[0.3em] uppercase animate-pulse">Establishing secure connection...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen relative flex flex-col selection:bg-music-primary/30">
@@ -186,10 +236,14 @@ export default function Home() {
           {/* Floating Search Bar (Top Right) */}
           <div className="absolute top-0 right-0 hidden xl:block z-50">
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-music-accent transition-colors" />
+              {isSearching ? (
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 border-2 border-music-accent border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-music-accent transition-colors" />
+              )}
               <input
                 type="text"
-                placeholder="Search music..."
+                placeholder="Search any song in the world..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-3 pl-12 pr-4 w-72 focus:outline-none focus:ring-2 focus:ring-music-accent/30 focus:border-music-accent/50 transition-all text-sm font-medium"
