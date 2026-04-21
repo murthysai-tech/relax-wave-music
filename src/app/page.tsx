@@ -16,7 +16,8 @@ import {
   LayoutGrid,
   FolderPlus,
   Music2,
-  LogOut
+  LogOut,
+  RotateCw
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { searchYouTubeTracks } from "@/services/youtube";
@@ -210,6 +211,19 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative flex flex-col selection:bg-music-primary/30">
+      {/* Quick Refresh Button (Top-Left) */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => window.location.reload()}
+        title="Refresh Platform"
+        className="fixed top-8 left-6 z-[1001] w-10 h-10 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shadow-2xl"
+      >
+        <RotateCw className="w-5 h-5" />
+      </motion.button>
+
       <ParticleBackground />
       <GlassNavbar 
         currentLanguage={selectedLanguage} 

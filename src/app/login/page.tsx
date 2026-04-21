@@ -16,8 +16,6 @@ export default function AuthPage() {
   const [needsPhone, setNeedsPhone] = useState(false);
   const [tempUserId, setTempUserId] = useState("");
   const [showLanding, setShowLanding] = useState(true);
-  const router = useRouter();
-
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -25,6 +23,15 @@ export default function AuthPage() {
     phoneNumber: "",
     identifier: "", // for login (email or username)
   });
+  const router = useRouter();
+
+  // Skip landing page if already logged in on this device
+  React.useEffect(() => {
+    const savedUser = localStorage.getItem("relaxwave_user");
+    if (savedUser) {
+      router.push("/");
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,21 +292,30 @@ export default function AuthPage() {
 
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-music-primary/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-music-accent/20 blur-[120px] rounded-full pointer-events-none" />
-
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md relative z-10"
-      >
-        <div className="glass-panel p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+ 
+      <div className="w-full max-w-md relative z-10 [perspective:1000px]">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={isLogin ? "login" : (isForgot ? "forgot" : "register")}
+            initial={{ opacity: 0, rotateX: -90, y: 20 }}
+            animate={{ opacity: 1, rotateX: 0, y: 0 }}
+            exit={{ opacity: 0, rotateX: 90, y: -20 }}
+            transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
+            className="w-full"
+          >
+            <div className="glass-panel p-10 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
+              {/* Subtle inner card glow */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-white/5 blur-3xl rounded-full" />
+              
           <div className="flex flex-col items-center mb-10">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-music-primary to-music-accent flex items-center justify-center mb-6 shadow-lg shadow-music-primary/20">
               <Music2 className="text-white w-8 h-8" />
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tighter uppercase mb-2">
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-[0.1em] uppercase mb-4 text-center transition-all duration-500">
               {isForgot ? "Reset Access" : (isLogin ? "Welcome Back" : "Join RelaxWave")}
             </h1>
-            <p className="text-white/40 text-sm font-medium tracking-wide">
+            <p className="text-white/40 text-sm font-medium tracking-wide text-center max-w-[280px] mx-auto">
               {isForgot ? "We'll send a wave to your inbox" : (isLogin ? "Sign in with your signature" : "Claim your unique username")}
             </p>
           </div>
@@ -480,6 +496,8 @@ export default function AuthPage() {
           <Sparkles className="w-4 h-4" /> Back to Explorations
         </Link>
       </motion.div>
-    </div>
+    </AnimatePresence>
+  </div>
+</div>
   );
 }

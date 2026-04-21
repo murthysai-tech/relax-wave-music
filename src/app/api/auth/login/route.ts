@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { findUser } from "@/lib/storageHub";
+ 
+const JWT_SECRET = process.env.JWT_SECRET || "RelaxWaveSecret123";
 
 export async function POST(req: Request) {
   try {
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
     // Create JWT
     const token = jwt.sign(
       { id: user._id || user.id, email: user.email },
-      process.env.JWT_SECRET!,
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 

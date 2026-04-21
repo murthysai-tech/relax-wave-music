@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { getUserPlaylists, createPlaylist } from "@/lib/storageHub";
+ 
+const JWT_SECRET = process.env.JWT_SECRET || "RelaxWaveSecret123";
 
 // Helper to get user ID from token
 const getUserId = (req: Request) => {
@@ -8,8 +10,8 @@ const getUserId = (req: Request) => {
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
   const token = authHeader.split(" ")[1];
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    return decoded.id;
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    return decoded.id || decoded.userId; // handle different payload structures
   } catch (error) {
     return null;
   }
