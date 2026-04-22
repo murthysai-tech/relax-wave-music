@@ -27,10 +27,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, artist_name, audio, image, album_name } = body;
+    const { name, artist_name, audio, image, album_name, language, genre } = body;
 
-    if (!name || !artist_name || !audio || !image) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!name || !artist_name || !audio || !image || !language) {
+      return NextResponse.json({ error: "Missing required fields (Name, Artist, Audio, Image, and Language are all required)" }, { status: 400 });
     }
 
     await dbConnect();
@@ -40,9 +40,29 @@ export async function POST(req: Request) {
       audio,
       image,
       album_name,
+      language,
+      genre
     });
 
     return NextResponse.json(song, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing song ID" }, { status: 400 });
+    }
+
+    await dbConnect();
+    await Song.findByIdAndDelete(id);
+
+    return NextResponse.json({ message: "Song deleted successfully" });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -6,7 +6,11 @@ import * as fileStorage from './fileStorage';
 export async function isDbOnline() {
   try {
     const conn = await dbConnect();
-    return conn.readyState === 1;
+    const isOnline = conn.connection.readyState === 1;
+    if (isOnline) {
+      console.log("✅ Database is ONLINE. Using MongoDB Atlas.");
+    }
+    return isOnline;
   } catch {
     return false;
   }
@@ -15,23 +19,35 @@ export async function isDbOnline() {
 export async function findUser(query: any) {
   if (await isDbOnline()) {
     try {
+      console.log("🔍 Attempting to find user in MongoDB...");
       const user = await User.findOne(query);
-      if (user) return user;
+      if (user) {
+        console.log("✅ User found in MongoDB.");
+        return user;
+      }
     } catch (e) {
       console.warn("DB Find Error, falling back to local:", e);
     }
   }
-  return await fileStorage.findLocalUser(query);
+  const localUser = await fileStorage.findLocalUser(query);
+  if (localUser) {
+    console.warn("📁 Found user in Local Offline Storage.");
+  }
+  return localUser;
 }
 
 export async function createUser(userData: any) {
   if (await isDbOnline()) {
     try {
-      return await User.create(userData);
+      console.log("✍️ Attempting to create user in MongoDB...");
+      const user = await User.create(userData);
+      console.log("✅ User created successfully in MongoDB.");
+      return user;
     } catch (e) {
       console.warn("DB Create Error, falling back to local:", e);
     }
   }
+  console.warn("📁 Saving new user to Local Offline Storage.");
   return await fileStorage.createLocalUser(userData);
 }
 

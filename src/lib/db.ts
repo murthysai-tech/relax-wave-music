@@ -24,11 +24,12 @@ async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 3000, // Fail fast (3 seconds) if DB is unreachable
-      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000, // 30 seconds for cloud
+      connectTimeoutMS: 30000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+      console.log("✅ MONGODB CONNECTED SUCCESSFULLY TO ATLAS");
       return mongoose;
     });
   }
@@ -36,13 +37,14 @@ async function dbConnect() {
   try {
     // Add a race condition to ensure we don't wait too long
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Database connection timeout")), 4000)
+      setTimeout(() => reject(new Error("Database connection timeout after 35 seconds")), 35000)
     );
 
     cached.conn = await Promise.race([cached.promise, timeoutPromise]);
-  } catch (e) {
+  } catch (e: any) {
     cached.promise = null;
-    console.warn("MONGODB CONNECTION FAILED. Entering Offline Mode.");
+    console.error("❌ MONGODB CONNECTION FAILED:", e.message);
+    console.warn("⚠️ Entering Offline Mode (Data will be saved to local JSON files).");
     throw e;
   }
 

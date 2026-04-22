@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { findUser } from "@/lib/storageHub";
+import { findUser, updateUser } from "@/lib/storageHub";
+import { sendWelcomeEmail } from "@/lib/email";
  
 const JWT_SECRET = process.env.JWT_SECRET || "RelaxWaveSecret123";
 
@@ -29,6 +30,16 @@ export async function POST(req: Request) {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+
+    // Trigger Welcome Email on First Login
+    if (user.isFirstLogin) {
+      try {
+        await sendWelcomeEmail(user.email, user.username);
+        await updateUser(user._id || user.id, { isFirstLogin: false });
+      } catch (emailError: any) {
+        console.warn("First login email hint:", emailError.message);
+      }
     }
 
     // Create JWT

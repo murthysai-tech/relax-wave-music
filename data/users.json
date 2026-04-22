@@ -94,5 +94,25 @@
         "playedAt": "2026-04-20T18:39:45.414Z"
       }
     ]
+  },
+  {
+    "username": "vincenzo_vikings",
+    "email": "vincenzovikings@gmail.com",
+    "password": "$2b$12$GpUuj9W9TFzT.1lA7/le.e7Ep6tmztxl57Q1M/NDmLWQkqag.lf66",
+    "phoneNumber": "8886739851",
+    "provider": "local",
+    "_id": "y5pq84qya",
+    "createdAt": "2026-04-22T02:30:18.647Z",
+    "listeningHistory": []
+  },
+  {
+    "username": "vincenzo_viking",
+    "email": "vincenzoviking@gmail.com",
+    "password": "$2b$12$xjbSgieG.xNQIdk7wYDrnO1MiFSDql5rXcC1GTU2JsBGy6f4Jd3uS",
+    "phoneNumber": "8886739851",
+    "provider": "local",
+    "_id": "dgwffqe4x",
+    "createdAt": "2026-04-22T02:41:59.739Z",
+    "listeningHistory": []
   }
 ]
