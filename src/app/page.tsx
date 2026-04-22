@@ -95,14 +95,35 @@ export default function Home() {
     return tracks.filter(t => t.artist_name === selectedArtist).slice(0, 10);
   }, [tracks, selectedArtist]);
 
-  // Load initial trending tracks
+  // Load initial trending tracks and DB tracks
   useEffect(() => {
     async function init() {
-      const trendingData = await getTrendingTracks(18);
-      // Merge local tracks at the beginning
-      const combined = [...LOCAL_TRACKS, ...trendingData];
-      setTracks(combined);
-      setIsLoading(false);
+      try {
+        const trendingData = await getTrendingTracks(18);
+        
+        // Fetch tracks from our MongoDB
+        let dbTracks: Track[] = [];
+        try {
+          const res = await fetch("/api/songs");
+          if (res.ok) {
+            const data = await res.json();
+            dbTracks = data.map((t: any) => ({
+              ...t,
+              id: t._id || t.id, // Ensure we have a string id
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to fetch DB tracks:", e);
+        }
+
+        // Merge DB tracks at the very beginning, followed by local, then trending
+        const combined = [...dbTracks, ...LOCAL_TRACKS, ...trendingData];
+        setTracks(combined);
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      } finally {
+        setIsLoading(false);
+      }
       
       // GSAP Entrance Animation
       const tl = gsap.timeline();
@@ -128,12 +149,19 @@ export default function Home() {
     
     async function fetchLang() {
       setIsLangLoading(true);
-      // First get local tracks for this language
+      // Get local tracks for this language
       const localForLang = getLocalTracksByLanguage(selectedLanguage);
-      // Then fetch some more from external API
+      
+      // Get DB tracks for this language from our current tracks state
+      const dbForLang = tracks.filter(t => 
+        (t as any).language?.toLowerCase() === selectedLanguage.toLowerCase() && 
+        !t.id.startsWith('local_') // Don't double count local tracks
+      );
+
+      // Fetch more from external API
       const externalData = await searchTracks(selectedLanguage, 12);
       
-      setLanguageTracks([...localForLang, ...externalData]);
+      setLanguageTracks([...dbForLang, ...localForLang, ...externalData]);
       setIsLangLoading(false);
     }
     fetchLang();

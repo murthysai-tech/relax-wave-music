@@ -6,6 +6,8 @@ import {
   Music2, 
   Plus, 
   Trash2, 
+  Edit,
+  Upload,
   LayoutGrid, 
   Image as ImageIcon, 
   Headphones, 
@@ -36,6 +38,8 @@ export function AdminDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [filterLanguage, setFilterLanguage] = useState("All");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -47,9 +51,15 @@ export function AdminDashboard() {
     album_name: ""
   });
 
+  const languages = ["English", "Hindi", "Telugu", "Tamil", "Spanish", "Japanese"];
+
   useEffect(() => {
     fetchSongs();
   }, []);
+
+  const filteredSongs = songs.filter(song => 
+    filterLanguage === "All" || song.language === filterLanguage
+  );
 
   const fetchSongs = async () => {
     setIsLoading(true);
@@ -64,28 +74,74 @@ export function AdminDashboard() {
     }
   };
 
+  const handleEdit = (song: Song) => {
+    setEditingId(song._id);
+    setFormData({
+      name: song.name,
+      artist_name: song.artist_name,
+      image: song.image,
+      audio: song.audio,
+      language: song.language || "English",
+      genre: song.genre || "Pop",
+      album_name: (song as any).album_name || ""
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "audio" | "image") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsSubmitting(true);
+    setError("");
+
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+      
+      const data = await res.json();
+      setFormData({ ...formData, [type]: data.url });
+      setSuccess(`${type === "audio" ? "Audio" : "Image"} uploaded successfully!`);
+    } catch (err: any) {
+      setError(`Upload failed: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
     setSuccess("");
 
+    const endpoint = editingId ? `/api/songs?id=${editingId}` : "/api/songs";
+    const method = editingId ? "PUT" : "POST";
+
     try {
-      const res = await fetch("/api/songs", {
-        method: "POST",
+      const res = await fetch(endpoint, {
+        method: method,
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": "Bearer admin-token" // Placeholder as required by API
+          "Authorization": "Bearer admin-token"
         },
         body: JSON.stringify(formData),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to add song");
+        throw new Error(data.error || "Failed to save song");
       }
 
-      setSuccess("Song added to Oasis successfully!");
+      setSuccess(editingId ? "Masterpiece updated successfully!" : "Song added to Oasis successfully!");
       setFormData({
         name: "",
         artist_name: "",
@@ -95,6 +151,7 @@ export function AdminDashboard() {
         genre: "Pop",
         album_name: ""
       });
+      setEditingId(null);
       fetchSongs();
       setTimeout(() => setShowForm(false), 2000);
     } catch (err: any) {
@@ -152,11 +209,19 @@ export function AdminDashboard() {
           <motion.button
             whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(34,211,238,0.2)" }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              if (showForm) {
+                setShowForm(false);
+                setEditingId(null);
+                setFormData({ name: "", artist_name: "", image: "", audio: "", language: "English", genre: "Pop", album_name: "" });
+              } else {
+                setShowForm(true);
+              }
+            }}
             className="px-8 py-4 bg-white text-black rounded-2xl font-black flex items-center gap-3 transition-all"
           >
             {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-            {showForm ? "CANCEL CURATION" : "ADD NEW MASTERPIECE"}
+            {showForm ? "CANCEL" : "ADD NEW MASTERPIECE"}
           </motion.button>
         </header>
 
@@ -172,7 +237,8 @@ export function AdminDashboard() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-music-accent/5 blur-3xl rounded-full" />
                 
                 <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
-                  <Sparkles className="w-6 h-6 text-music-accent" /> SONG DETAILS
+                  <Sparkles className="w-6 h-6 text-music-accent" /> 
+                  {editingId ? "EDIT MASTERPIECE" : "SONG DETAILS"}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
@@ -211,11 +277,9 @@ export function AdminDashboard() {
                           onChange={e => setFormData({...formData, language: e.target.value})}
                           className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 outline-none focus:ring-2 focus:ring-music-accent/20 transition-all font-bold appearance-none"
                         >
-                          <option value="English">English</option>
-                          <option value="Hindi">Hindi</option>
-                          <option value="Telugu">Telugu</option>
-                          <option value="Spanish">Spanish</option>
-                          <option value="Japanese">Japanese</option>
+                          {languages.map(lang => (
+                            <option key={lang} value={lang}>{lang}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="space-y-2">
@@ -232,28 +296,40 @@ export function AdminDashboard() {
 
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Audio URL (Stream Link)</label>
-                      <div className="relative group">
-                        <Headphones className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-music-accent transition-colors" />
-                        <input 
-                          type="url" required placeholder="https://example.com/song.mp3"
-                          value={formData.audio}
-                          onChange={e => setFormData({...formData, audio: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-music-accent/20 transition-all font-bold"
-                        />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Audio Source</label>
+                      <div className="flex gap-2">
+                        <div className="relative group flex-grow">
+                          <Headphones className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-music-accent transition-colors" />
+                          <input 
+                            type="text" required placeholder="URL or uploaded file"
+                            value={formData.audio}
+                            onChange={e => setFormData({...formData, audio: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-music-accent/20 transition-all font-bold"
+                          />
+                        </div>
+                        <label className="shrink-0 flex items-center justify-center w-14 h-14 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors text-white/40 hover:text-music-accent">
+                          <Upload className="w-5 h-5" />
+                          <input type="file" accept="audio/*" className="hidden" onChange={e => handleFileUpload(e, "audio")} />
+                        </label>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Cover Image URL</label>
-                      <div className="relative group">
-                        <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-music-accent transition-colors" />
-                        <input 
-                          type="url" required placeholder="https://images.unsplash.com/..."
-                          value={formData.image}
-                          onChange={e => setFormData({...formData, image: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-music-accent/20 transition-all font-bold"
-                        />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Cover Image Source</label>
+                      <div className="flex gap-2">
+                        <div className="relative group flex-grow">
+                          <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-music-accent transition-colors" />
+                          <input 
+                            type="text" required placeholder="URL or uploaded file"
+                            value={formData.image}
+                            onChange={e => setFormData({...formData, image: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-music-accent/20 transition-all font-bold"
+                          />
+                        </div>
+                        <label className="shrink-0 flex items-center justify-center w-14 h-14 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors text-white/40 hover:text-music-accent">
+                          <Upload className="w-5 h-5" />
+                          <input type="file" accept="image/*" className="hidden" onChange={e => handleFileUpload(e, "image")} />
+                        </label>
                       </div>
                     </div>
 
@@ -278,7 +354,7 @@ export function AdminDashboard() {
                         disabled={isSubmitting}
                         className="w-full py-5 rounded-2xl bg-white text-black font-black hover:scale-[1.02] active:scale-98 transition-all shadow-xl disabled:opacity-50"
                       >
-                        {isSubmitting ? "SYNCHRONIZING..." : "UPLOAD TO OASIS"}
+                        {isSubmitting ? "SYNCHRONIZING..." : (editingId ? "SAVE CHANGES" : "UPLOAD TO OASIS")}
                       </button>
                     </div>
                   </div>
@@ -290,16 +366,29 @@ export function AdminDashboard() {
 
         {/* Songs List */}
         <section>
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
             <h2 className="text-2xl font-black flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-music-primary/20 flex items-center justify-center text-music-primary">
                 <LayoutGrid className="w-5 h-5" />
               </div>
               VAULT CONTENTS
             </h2>
-            <div className="relative group hidden md:block">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input type="text" placeholder="Search the vault..." className="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs font-bold outline-none focus:ring-1 focus:ring-white/20 w-48" />
+            
+            {/* Language Filter */}
+            <div className="flex flex-wrap gap-2">
+              {["All", ...languages].map(lang => (
+                <button
+                  key={lang}
+                  onClick={() => setFilterLanguage(lang)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                    filterLanguage === lang 
+                    ? "bg-music-accent text-black" 
+                    : "bg-white/5 border border-white/10 text-white/40 hover:bg-white/10"
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -308,8 +397,8 @@ export function AdminDashboard() {
               [...Array(6)].map((_, i) => (
                 <div key={i} className="h-24 bg-white/5 rounded-3xl animate-pulse border border-white/5" />
               ))
-            ) : songs.length > 0 ? (
-              songs.map((song) => (
+            ) : filteredSongs.length > 0 ? (
+              filteredSongs.map((song) => (
                 <motion.div
                   key={song._id}
                   layout
@@ -333,14 +422,27 @@ export function AdminDashboard() {
                     </div>
                   </div>
 
-                  <motion.button
-                    whileHover={{ scale: 1.1, color: "#f472b6" }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleDelete(song._id)}
-                    className="p-3 text-white/20 hover:text-music-pink transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </motion.button>
+                  <div className="flex items-center gap-1">
+                    <motion.button
+                      whileHover={{ scale: 1.1, color: "#22d3ee" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleEdit(song)}
+                      className="p-2 text-white/20 hover:text-music-accent transition-colors"
+                      title="Edit masterpiece"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.1, color: "#f472b6" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleDelete(song._id)}
+                      className="p-2 text-white/20 hover:text-music-pink transition-colors"
+                      title="Remove masterpiece"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </motion.button>
+                  </div>
                 </motion.div>
               ))
             ) : (
