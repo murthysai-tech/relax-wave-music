@@ -10,7 +10,8 @@ import {
   VolumeX, 
   Repeat, 
   Shuffle,
-  Music4
+  Music4,
+  Plus
 } from "lucide-react";
 import { Track } from "@/services/jamendo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +28,7 @@ interface FloatingPlayerProps {
   onVolumeChange: (val: number) => void;
   onNext: () => void;
   onPrev: () => void;
+  onAddToPlaylist: (track: Track) => void;
 }
 
 export function FloatingPlayer({
@@ -38,7 +40,8 @@ export function FloatingPlayer({
   onSeek,
   onVolumeChange,
   onNext,
-  onPrev
+  onPrev,
+  onAddToPlaylist
 }: FloatingPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -177,6 +180,13 @@ export function FloatingPlayer({
               />
             </div>
           </div>
+          <button 
+            onClick={() => track && onAddToPlaylist(track)}
+            className="p-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-music-accent hover:bg-white/10 transition-all"
+            title="Add to Playlist"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
           <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all">
             <Music4 className="w-5 h-5" />
           </button>

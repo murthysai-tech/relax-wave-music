@@ -10,16 +10,12 @@ const PlaylistSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  tracks: [
-    {
-      id: String,
-      name: String,
-      artist_name: String,
-      image: String,
-      audio: String,
-      album_name: String,
-    },
-  ],
+  username: {
+    type: String,
+  },
+  tracks: [{
+    type: Object, // Storing full track object for performance, or can use references
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

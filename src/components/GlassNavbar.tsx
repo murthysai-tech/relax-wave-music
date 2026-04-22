@@ -47,7 +47,8 @@ export function GlassNavbar({ currentLanguage, onLanguageChange, activeNav, onNa
   const languages = [
     { id: 'telugu', label: 'Telugu' },
     { id: 'hindi', label: 'Hindi' },
-    { id: 'english', label: 'English' }
+    { id: 'english', label: 'English' },
+    { id: 'tamil', label: 'Tamil' }
   ];
 
   return (

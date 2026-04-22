@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, tracks = [] } = await req.json();
+    const { name, tracks = [], username } = await req.json();
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     const playlist = await createPlaylist({
       name,
       userId,
+      username,
       tracks,
     });
 

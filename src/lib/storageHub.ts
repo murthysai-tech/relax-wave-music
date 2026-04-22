@@ -109,3 +109,19 @@ export async function createPlaylist(playlistData: any) {
   }
   return await fileStorage.createLocalPlaylist(playlistData);
 }
+
+export async function updatePlaylist(name: string, userId: string, tracks: any[]) {
+  if (await isDbOnline()) {
+    try {
+      return await Playlist.findOneAndUpdate(
+        { name, userId },
+        { tracks },
+        { new: true }
+      );
+    } catch (e) {
+      console.warn("DB Update Playlist Error:", e);
+    }
+  }
+  // Local update could be added to fileStorage if needed
+  return null;
+}

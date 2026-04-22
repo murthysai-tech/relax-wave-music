@@ -117,7 +117,10 @@ export function useAudio() {
 
   const createPlaylist = useCallback(async (name: string) => {
     const token = getAuthToken();
-    if (token) {
+    const userStr = localStorage.getItem("relaxwave_user");
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    if (token && user) {
       try {
         const res = await fetch("/api/library/playlists", {
           method: "POST",
@@ -125,7 +128,7 @@ export function useAudio() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}` 
           },
-          body: JSON.stringify({ name, tracks: [] })
+          body: JSON.stringify({ name, tracks: [], username: user.username })
         });
         if (res.ok) {
           setCustomPlaylists(prev => ({ ...prev, [name]: [] }));
@@ -147,11 +150,23 @@ export function useAudio() {
 
   const addToPlaylist = useCallback(async (playlistName: string, track: Track) => {
     const token = getAuthToken();
-    // Simplified: local state update always happens
+    
     setCustomPlaylists(prev => {
       const list = prev[playlistName] || [];
       if (list.find(t => t.id === track.id)) return prev;
       const newList = [...list, track];
+      
+      // If logged in, sync with server
+      if (token) {
+        fetch("/api/library/playlists/update", {
+          method: "PUT",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ name: playlistName, tracks: newList })
+        }).catch(err => console.error("Playlist sync failed", err));
+      }
       
       return { ...prev, [playlistName]: newList };
     });
