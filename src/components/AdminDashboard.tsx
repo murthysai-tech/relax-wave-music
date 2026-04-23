@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
-  ChevronLeft
+  ChevronLeft,
+  User
 } from "lucide-react";
 import Link from "next/link";
 
@@ -46,6 +47,17 @@ export function AdminDashboard() {
     artist_name: "",
     image: "",
     audio: "",
+    language: "English",
+    genre: "Pop",
+    album_name: ""
+  });
+
+  const [showBulkForm, setShowBulkForm] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkProgress, setBulkProgress] = useState("");
+  const [bulkFormData, setBulkFormData] = useState({
+    artist_name: "",
+    image: "",
     language: "English",
     genre: "Pop",
     album_name: ""
@@ -161,6 +173,103 @@ export function AdminDashboard() {
     }
   };
 
+  const handleBulkImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsSubmitting(true);
+    setError("");
+
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+      
+      const data = await res.json();
+      setBulkFormData({ ...bulkFormData, image: data.url });
+      setSuccess("Album cover uploaded successfully!");
+    } catch (err: any) {
+      setError(`Upload failed: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (bulkFiles.length === 0) {
+      setError("Please select at least one audio file.");
+      return;
+    }
+    if (!bulkFormData.image) {
+      setError("Please provide a cover image for the bulk upload.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError("");
+    setSuccess("");
+    
+    try {
+      let successCount = 0;
+      for (let i = 0; i < bulkFiles.length; i++) {
+        const file = bulkFiles[i];
+        setBulkProgress(`Uploading ${i + 1} of ${bulkFiles.length}: ${file.name}...`);
+        
+        // 1. Upload audio
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadFormData });
+        
+        if (!uploadRes.ok) throw new Error(`Failed to upload ${file.name}`);
+        const uploadData = await uploadRes.json();
+        
+        // 2. Clean Name
+        const rawName = file.name.replace(/\.[^/.]+$/, "");
+        const cleanName = rawName.replace(/[_-]/g, " ");
+        
+        // 3. Create Song
+        const songData = {
+          name: cleanName,
+          artist_name: bulkFormData.artist_name,
+          image: bulkFormData.image,
+          audio: uploadData.url,
+          language: bulkFormData.language,
+          genre: bulkFormData.genre,
+          album_name: bulkFormData.album_name
+        };
+        
+        const res = await fetch("/api/songs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer admin-token" },
+          body: JSON.stringify(songData),
+        });
+        
+        if (!res.ok) throw new Error(`Failed to save ${cleanName}`);
+        successCount++;
+      }
+      
+      setSuccess(`Successfully uploaded ${successCount} songs!`);
+      setBulkProgress("");
+      setBulkFiles([]);
+      setBulkFormData({ artist_name: "", image: "", language: "English", genre: "Pop", album_name: "" });
+      fetchSongs();
+      setTimeout(() => setShowBulkForm(false), 2000);
+      
+    } catch (err: any) {
+      setError(err.message);
+      setBulkProgress("");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to remove this masterpiece?")) return;
 
@@ -206,27 +315,172 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(34,211,238,0.2)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              if (showForm) {
+          <div className="flex flex-col md:flex-row gap-4">
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(168,85,247,0.2)" }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
                 setShowForm(false);
-                setEditingId(null);
-                setFormData({ name: "", artist_name: "", image: "", audio: "", language: "English", genre: "Pop", album_name: "" });
-              } else {
-                setShowForm(true);
-              }
-            }}
-            className="px-8 py-4 bg-white text-black rounded-2xl font-black flex items-center gap-3 transition-all"
-          >
-            {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-            {showForm ? "CANCEL" : "ADD NEW MASTERPIECE"}
-          </motion.button>
+                setShowBulkForm(!showBulkForm);
+              }}
+              className="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:bg-white/10"
+            >
+              <LayoutGrid className="w-5 h-5" />
+              {showBulkForm ? "CANCEL BULK" : "BULK UPLOAD"}
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(34,211,238,0.2)" }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setShowBulkForm(false);
+                if (showForm) {
+                  setShowForm(false);
+                  setEditingId(null);
+                  setFormData({ name: "", artist_name: "", image: "", audio: "", language: "English", genre: "Pop", album_name: "" });
+                } else {
+                  setShowForm(true);
+                }
+              }}
+              className="px-8 py-4 bg-white text-black rounded-2xl font-black flex items-center justify-center gap-3 transition-all"
+            >
+              {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+              {showForm ? "CANCEL" : "ADD NEW MASTERPIECE"}
+            </motion.button>
+          </div>
         </header>
 
-        <AnimatePresence>
-          {showForm && (
+        <AnimatePresence mode="wait">
+          {showBulkForm && (
+            <motion.section
+              key="bulkForm"
+              initial={{ opacity: 0, y: -20, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -20, height: 0 }}
+              className="mb-16 overflow-hidden"
+            >
+              <div className="glass-panel p-8 md:p-12 rounded-[3rem] border border-white/10 relative overflow-hidden bg-gradient-to-br from-music-primary/10 to-transparent">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-music-primary/10 blur-3xl rounded-full" />
+                
+                <h2 className="text-2xl font-black mb-8 flex items-center gap-3 text-music-primary">
+                  <LayoutGrid className="w-6 h-6" /> BULK ALBUM UPLOAD
+                </h2>
+                <p className="text-sm font-bold text-white/50 mb-8 max-w-2xl">
+                  Upload an entire album at once. Enter the shared artist, genre, and cover image below. Then select multiple audio files. The system will use the filenames as the song titles automatically!
+                </p>
+
+                <form onSubmit={handleBulkSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Shared Artist Name</label>
+                      <div className="relative group">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-music-primary transition-colors" />
+                        <input 
+                          type="text" required placeholder="e.g. Arijit Singh"
+                          value={bulkFormData.artist_name}
+                          onChange={e => setBulkFormData({...bulkFormData, artist_name: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-music-primary/50 transition-all font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Language</label>
+                        <select 
+                          value={bulkFormData.language}
+                          onChange={e => setBulkFormData({...bulkFormData, language: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 outline-none focus:ring-2 focus:ring-music-primary/50 transition-all font-bold appearance-none"
+                        >
+                          {languages.map(lang => (
+                            <option key={lang} value={lang}>{lang}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Genre</label>
+                        <input 
+                          type="text" placeholder="Lofi / Pop"
+                          value={bulkFormData.genre}
+                          onChange={e => setBulkFormData({...bulkFormData, genre: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 outline-none focus:ring-2 focus:ring-music-primary/50 transition-all font-bold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Select Multiple Audio Files</label>
+                      <div className="flex gap-2">
+                        <div className="flex-grow bg-white/5 border border-white/10 rounded-2xl py-4 px-4 font-bold text-sm text-white/70 flex items-center overflow-hidden whitespace-nowrap">
+                          {bulkFiles.length > 0 ? `${bulkFiles.length} files selected for upload` : "No files selected yet"}
+                        </div>
+                        <label className="shrink-0 flex items-center justify-center w-14 h-14 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-music-primary/20 transition-colors text-white/40 hover:text-music-primary">
+                          <Upload className="w-5 h-5" />
+                          <input type="file" multiple accept="audio/*" className="hidden" onChange={e => {
+                            if (e.target.files) setBulkFiles(Array.from(e.target.files));
+                          }} />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Shared Cover Image</label>
+                      <div className="flex gap-2">
+                        <div className="relative group flex-grow">
+                          <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-music-primary transition-colors" />
+                          <input 
+                            type="text" required placeholder="Image URL or upload"
+                            value={bulkFormData.image}
+                            onChange={e => setBulkFormData({...bulkFormData, image: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-music-primary/50 transition-all font-bold"
+                          />
+                        </div>
+                        <label className="shrink-0 flex items-center justify-center w-14 h-14 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors text-white/40 hover:text-music-primary">
+                          <Upload className="w-5 h-5" />
+                          <input type="file" accept="image/*" className="hidden" onChange={handleBulkImageUpload} />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                       <AnimatePresence>
+                        {bulkProgress && (
+                          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center justify-center gap-2 text-music-primary mb-4 bg-music-primary/10 p-4 rounded-xl border border-music-primary/20 font-black">
+                            <div className="w-4 h-4 border-2 border-music-primary border-t-transparent rounded-full animate-spin" />
+                            {bulkProgress}
+                          </motion.div>
+                        )}
+                        {error && (
+                          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2 text-music-pink mb-4 bg-music-pink/10 p-3 rounded-xl border border-music-pink/20">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase">{error}</span>
+                          </motion.div>
+                        )}
+                        {success && (
+                          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2 text-music-accent mb-4 bg-music-accent/10 p-3 rounded-xl border border-music-accent/20">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase">{success}</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <button 
+                        type="submit" 
+                        disabled={isSubmitting || bulkFiles.length === 0}
+                        className="w-full py-5 rounded-2xl bg-music-primary text-white font-black hover:scale-[1.02] active:scale-98 transition-all shadow-xl shadow-music-primary/20 disabled:opacity-50 disabled:hover:scale-100"
+                      >
+                        {isSubmitting ? "UPLOADING TO OASIS..." : `UPLOAD ${bulkFiles.length} SONGS`}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </motion.section>
+          )}
+
+          {showForm && !showBulkForm && (
             <motion.section
               initial={{ opacity: 0, y: -20, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}

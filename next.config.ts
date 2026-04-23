@@ -5,27 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'v3.jamendo.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'imgs2.jamendo.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'c.saavncdn.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.ytimg.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
+        hostname: '**',
       },
     ],
   },

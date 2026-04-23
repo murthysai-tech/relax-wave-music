@@ -102,9 +102,7 @@ export default function Home() {
   useEffect(() => {
     async function init() {
       try {
-        const trendingData = await getTrendingTracks(18);
-        
-        // Fetch tracks from our MongoDB
+        // Fetch tracks from our MongoDB only
         let dbTracks: Track[] = [];
         try {
           const res = await fetch("/api/songs");
@@ -119,9 +117,8 @@ export default function Home() {
           console.error("Failed to fetch DB tracks:", e);
         }
 
-        // Merge DB tracks at the very beginning, followed by local, then trending
-        const combined = [...dbTracks, ...LOCAL_TRACKS, ...trendingData];
-        setTracks(combined);
+        // Use ONLY DB tracks
+        setTracks(dbTracks);
       } catch (err) {
         console.error("Initialization failed:", err);
       } finally {
@@ -156,23 +153,26 @@ export default function Home() {
     
     async function fetchLang() {
       setIsLangLoading(true);
-      // Get local tracks for this language
-      const localForLang = getLocalTracksByLanguage(selectedLanguage);
       
-      // Get DB tracks for this language from our current tracks state
-      const dbForLang = tracks.filter(t => 
-        (t as any).language?.toLowerCase() === selectedLanguage.toLowerCase() && 
-        !t.id.startsWith('local_') // Don't double count local tracks
-      );
-
-      // Fetch more from external API
-      const externalData = await searchTracks(selectedLanguage, 12);
-      
-      setLanguageTracks([...dbForLang, ...localForLang, ...externalData]);
-      setIsLangLoading(false);
+      try {
+        // Search YouTube for top songs in this language
+        const ytLangTracks = await searchYouTubeTracks(`Top ${selectedLanguage} songs`);
+        
+        // Also get any DB tracks for this language
+        const dbForLang = tracks.filter(t => 
+          (t as any).language?.toLowerCase() === selectedLanguage.toLowerCase()
+        );
+        
+        // Combine them, putting local DB tracks first
+        setLanguageTracks([...dbForLang, ...ytLangTracks]);
+      } catch (err) {
+        console.error("Failed to fetch language tracks", err);
+      } finally {
+        setIsLangLoading(false);
+      }
     }
     fetchLang();
-  }, [selectedLanguage]);
+  }, [selectedLanguage, tracks]);
 
   // Universal Search Integration
   const [searchResults, setSearchResults] = useState<Track[]>([]);
@@ -187,27 +187,20 @@ export default function Home() {
     const delayDebounceSelector = setTimeout(async () => {
       setIsSearching(true);
       try {
-        // Search in BOTH state tracks and newly fetched DB tracks to be sure
+        // 1. Search YouTube API
+        const ytResults = await searchYouTubeTracks(searchQuery);
+
+        // 2. Search local DB
         const res = await fetch("/api/songs");
         const dbData = await res.json();
-        const allLocal = [...dbData.map((t: any) => ({ ...t, id: t._id || t.id })), ...LOCAL_TRACKS];
+        const allDb = dbData.map((t: any) => ({ ...t, id: t._id || t.id }));
 
-        const localMatches = allLocal.filter(t => 
+        const localMatches = allDb.filter((t: any) => 
           t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
           t.artist_name.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-        // Then fetch from YouTube
-        const ytResults = await searchYouTubeTracks(searchQuery);
-        
-        const uniqueMatches = [...localMatches];
-        ytResults.forEach(y => {
-          if (!uniqueMatches.some(l => l.name.toLowerCase() === y.name.toLowerCase())) {
-            uniqueMatches.push(y);
-          }
-        });
-
-        setSearchResults(uniqueMatches);
+        setSearchResults([...localMatches, ...ytResults]);
       } catch (e) {
         console.error(e);
       } finally {
@@ -436,6 +429,7 @@ export default function Home() {
                     <CategorySection 
                       title={`${selectedLanguage.toUpperCase()} SONGS`} 
                       icon={Globe}
+                      horizontal={true}
                     >
                       {isLangLoading ? (
                         [...Array(6)].map((_, i) => <TrackSkeleton key={i} />)

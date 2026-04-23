@@ -62,22 +62,40 @@ export function SongCard({
         <div className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ${isActive && isPlaying ? "opacity-100" : ""}`}>
           <button 
             onClick={() => onPlay(track)}
-            className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)] transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 hover:scale-110 active:scale-95"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)] transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 hover:scale-110 active:scale-95"
           >
             {isActive && isPlaying ? (
-              <Pause className="w-6 h-6 fill-black" />
+              <Pause className="w-4 h-4 md:w-5 md:h-5 fill-black" />
             ) : (
-              <Play className="w-6 h-6 fill-black ml-1" />
+              <Play className="w-4 h-4 md:w-5 md:h-5 fill-black ml-1" />
             )}
           </button>
         </div>
 
-        {/* Action Buttons Overlays */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 transform translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500">
+      </div>
+
+      <div className="mt-4 px-2 pb-2 flex items-start justify-between gap-2 text-left">
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-bold text-sm md:text-base truncate transition-colors ${
+            isActive ? "text-gradient-neon" : "text-white/90"
+          }`}>
+            {track.name}
+          </h3>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onArtistClick(track.artist_name); }}
+            className="text-xs text-white/50 mt-1 flex items-center gap-1.5 font-medium hover:text-music-accent transition-colors truncate"
+          >
+            <span className="w-1.5 h-1.5 bg-music-secondary rounded-full shrink-0" /> 
+            <span className="truncate">{track.artist_name}</span>
+          </button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button 
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(track.id); }}
-            className={`p-2.5 rounded-full backdrop-blur-md transition-all ${
-              isFavorite ? "bg-music-pink text-white" : "bg-black/30 text-white/70 hover:bg-black/50"
+            className={`p-2 rounded-full transition-all hover:bg-white/10 ${
+              isFavorite ? "text-music-pink" : "text-white/50"
             }`}
             title="Favorite"
           >
@@ -86,36 +104,12 @@ export function SongCard({
           
           <button 
             onClick={(e) => { e.stopPropagation(); onAddToPlaylist(track); }}
-            className="p-2.5 rounded-full bg-black/30 backdrop-blur-md text-white/70 hover:bg-black/50 hover:text-white transition-all"
+            className="p-2 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
             title="Add to Playlist"
           >
             <Plus className="w-4 h-4" />
           </button>
-
-          <button 
-            onClick={handleShare}
-            className={`p-2.5 rounded-full backdrop-blur-md transition-all ${
-              isShared ? "bg-music-accent text-white" : "bg-black/30 text-white/70 hover:bg-black/50"
-            }`}
-            title="Share"
-          >
-            {isShared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-          </button>
         </div>
-      </div>
-
-      <div className="mt-4 px-2 pb-2 text-left">
-        <h3 className={`font-bold text-sm md:text-base line-clamp-1 transition-colors ${
-          isActive ? "text-gradient-neon" : "text-white/90"
-        }`}>
-          {track.name}
-        </h3>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onArtistClick(track.artist_name); }}
-          className="text-xs text-white/50 mt-1 flex items-center gap-1.5 font-medium hover:text-music-accent transition-colors"
-        >
-          <span className="w-1.5 h-1.5 bg-music-secondary rounded-full" /> {track.artist_name}
-        </button>
       </div>
 
       {/* Playing Indicator Pill */}
